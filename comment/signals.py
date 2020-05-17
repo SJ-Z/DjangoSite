@@ -26,8 +26,9 @@ def send_notification(sender, instance, **kwargs):
         recipient = instance.reply_to
         verb = '{0} 回复了你的评论“{1}”'.format(instance.user.get_nickname_or_username(), strip_tags(instance.parent.text))
 
-    url = instance.content_object.get_url() + '#comment_' + str(instance.pk)
-    notify.send(instance.user, recipient=recipient, verb=verb, action_object=instance, url=url)
+    url = instance.content_object.get_url()
+    comment_id = instance.id
+    notify.send(instance.user, recipient=recipient, verb=verb, action_object=instance, url=url, comment_id=comment_id)
 
 
 @receiver(post_save, sender=Comment)
