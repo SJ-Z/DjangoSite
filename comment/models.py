@@ -1,11 +1,7 @@
-import threading
 from django.contrib.auth.models import User
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core import mail
-from django.conf import settings
-from django.template.loader import render_to_string
 
 
 class Comment(models.Model):
@@ -24,37 +20,11 @@ class Comment(models.Model):
     def __str__(self):
         return self.text
 
-    def send_mail(self):
-        if self.parent is None:
-            # 评论我的博客
-            subject = '你的博客收到了一条评论'
-            email = self.content_object.get_email()
-        else:
-            # 回复评论
-            subject = '你的评论收到了一条回复'
-            email = self.reply_to.email
-        if email != '':
-            context = {
-                'comment_text': self.text,
-                'url': self.content_object.get_url()
-            }
-            text = render_to_string('comment/send_mail.html', context)
-            send_mail_async = SendMailAsync(subject, text, email)
-            send_mail_async.start()
+    def get_user(self):
+        return self.user
+
+    def get_url(self):
+        return self.content_object.get_url()
 
     class Meta:
         ordering = ['-comment_time']
-
-
-class SendMailAsync(threading.Thread):
-    """异步发送邮件"""
-    def __init__(self, subject, text, email, fail_silently=False):
-        self.subject = subject
-        self.text = text
-        self.email = email
-        self.fail_silently = fail_silently
-        threading.Thread.__init__(self)
-
-    def run(self) -> None:
-        mail.send_mail(self.subject, '', settings.EMAIL_HOST_USER, [self.email],
-                       fail_silently=self.fail_silently, html_message=self.text)
