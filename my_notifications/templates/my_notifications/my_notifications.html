@@ -21,7 +21,7 @@
                     {% for notification in request.user.notifications.all %}
                         <li class="{% if not notification.unread %}read{% endif %}">
                             [{{ notification.timesince }}之前]，
-                            <a href="{{ notification.data.url }}?notification_id={{ notification.id }}#comment_{{ notification.data.comment_id }}">
+                            <a href="{{ notification.data.url }}?notification_id={{ notification.id }}{% if notification.data.comment_id %}#comment_{{ notification.data.comment_id }}{% endif %}">
                                 {{ notification.verb }}
                             </a>
                         </li>
