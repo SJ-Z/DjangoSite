@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.utils import timezone
 from django.core.cache import cache
+from django.core.paginator import Paginator
 
 from blog.models import Blog
 from read_statistics.utils import get_week_read_data, get_today_hot_data, get_yesterday_hot_data
@@ -37,3 +38,31 @@ def home(request):
         'week_hot_blogs': week_hot_blogs,
     }
     return render(request, 'home.html', context)
+
+
+def search(request):
+    search_words = request.GET.get('word', '').strip()
+    # 分词：按空格 & | ~
+    condition = None
+    for word in search_words.split(' '):
+        if condition is None:
+            condition = Q(title__icontains=word)
+        else:
+            condition = condition | Q(title__icontains=word)
+
+    search_blogs = []
+    # 筛选：搜索
+    if condition is not None:
+        search_blogs = Blog.objects.filter(condition)
+
+    # 分页
+    paginator = Paginator(search_blogs, 20)
+    page_num = request.GET.get('page', 1)
+    page_of_blogs = paginator.get_page(page_num)
+
+    context = {
+        'search_words': search_words,
+        'search_blogs_count': search_blogs.count(),
+        'page_of_blogs': page_of_blogs,
+    }
+    return render(request, 'search.html', context)
